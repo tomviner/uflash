@@ -248,12 +248,13 @@ def test_flash_no_args():
     MicroPython firmware onto the device.
     """
     with mock.patch('uflash.find_microbit', return_value='foo'):
-        with mock.patch('uflash.save_hex') as mock_save:
-            uflash.flash()
-            assert mock_save.call_count == 1
-            assert mock_save.call_args[0][0] == uflash._RUNTIME
-            expected_path = os.path.join('foo', 'micropython.hex')
-            assert mock_save.call_args[0][1] == expected_path
+        with mock.patch('uflash.glob', side_effect=lambda x: [x]):
+            with mock.patch('uflash.save_hex') as mock_save:
+                uflash.flash()
+                assert mock_save.call_count == 1
+                assert mock_save.call_args[0][0] == uflash._RUNTIME
+                expected_path = os.path.join('foo', 'micropython.hex')
+                assert mock_save.call_args[0][1] == expected_path
 
 
 def test_flash_has_python_no_path_to_microbit():
@@ -264,17 +265,18 @@ def test_flash_has_python_no_path_to_microbit():
     The resulting payload should be a correctly created micropython.hex file.
     """
     with mock.patch('uflash.find_microbit', return_value='foo'):
-        with mock.patch('uflash.save_hex') as mock_save:
-            uflash.flash('tests/example.py')
-            assert mock_save.call_count == 1
-            # Create the hex we're expecting to flash onto the device.
-            with open('tests/example.py', 'rb') as py_file:
-                python = uflash.hexlify(py_file.read())
-            assert python
-            expected_hex = uflash.embed_hex(uflash._RUNTIME, python)
-            assert mock_save.call_args[0][0] == expected_hex
-            expected_path = os.path.join('foo', 'micropython.hex')
-            assert mock_save.call_args[0][1] == expected_path
+        with mock.patch('uflash.glob', side_effect=lambda x: [x]):
+            with mock.patch('uflash.save_hex') as mock_save:
+                uflash.flash('tests/example.py')
+                assert mock_save.call_count == 1
+                # Create the hex we're expecting to flash onto the device.
+                with open('tests/example.py', 'rb') as py_file:
+                    python = uflash.hexlify(py_file.read())
+                assert python
+                expected_hex = uflash.embed_hex(uflash._RUNTIME, python)
+                assert mock_save.call_args[0][0] == expected_hex
+                expected_path = os.path.join('foo', 'micropython.hex')
+                assert mock_save.call_args[0][1] == expected_path
 
 
 def test_flash_with_path_to_microbit():
@@ -283,16 +285,17 @@ def test_flash_with_path_to_microbit():
     the MicroPython firmware and the referenced Python script.
     """
     with mock.patch('uflash.save_hex') as mock_save:
-        uflash.flash('tests/example.py', 'test_path')
-        assert mock_save.call_count == 1
-        # Create the hex we're expecting to flash onto the device.
-        with open('tests/example.py', 'rb') as py_file:
-            python = uflash.hexlify(py_file.read())
-        assert python
-        expected_hex = uflash.embed_hex(uflash._RUNTIME, python)
-        assert mock_save.call_args[0][0] == expected_hex
-        expected_path = os.path.join('test_path', 'micropython.hex')
-        assert mock_save.call_args[0][1] == expected_path
+        with mock.patch('uflash.glob', side_effect=lambda x: [x]):
+            uflash.flash('tests/example.py', 'test_path')
+            assert mock_save.call_count == 1
+            # Create the hex we're expecting to flash onto the device.
+            with open('tests/example.py', 'rb') as py_file:
+                python = uflash.hexlify(py_file.read())
+            assert python
+            expected_hex = uflash.embed_hex(uflash._RUNTIME, python)
+            assert mock_save.call_args[0][0] == expected_hex
+            expected_path = os.path.join('test_path', 'micropython.hex')
+            assert mock_save.call_args[0][1] == expected_path
 
 
 def test_flash_with_path_to_runtime():
@@ -305,15 +308,16 @@ def test_flash_with_path_to_runtime():
     mock_o.return_value.__exit__ = mock.Mock()
     mock_o.return_value.read.return_value = 'script'
     with mock.patch.object(builtins, 'open', mock_o) as mock_open:
-        with mock.patch('uflash.embed_hex', return_value='foo') as em_h:
-            with mock.patch('uflash.find_microbit', return_value='bar'):
-                with mock.patch('uflash.save_hex') as mock_save:
-                    uflash.flash('tests/example.py',
-                                 path_to_runtime='tests/fake.hex')
-                    assert mock_open.call_args[0][0] == 'tests/fake.hex'
-                    assert em_h.call_args[0][0] == 'script'
-                    mock_save.assert_called_once_with('foo',
-                                                      'bar/micropython.hex')
+        with mock.patch('uflash.glob', side_effect=lambda x: [x]):
+            with mock.patch('uflash.embed_hex', return_value='foo') as em_h:
+                with mock.patch('uflash.find_microbit', return_value='bar'):
+                    with mock.patch('uflash.save_hex') as mock_save:
+                        uflash.flash('tests/example.py',
+                                     path_to_runtime='tests/fake.hex')
+                        assert mock_open.call_args[0][0] == 'tests/fake.hex'
+                        assert em_h.call_args[0][0] == 'script'
+                        mock_save.assert_called_once_with('foo',
+                                                          'bar/micropython.hex')
 
 
 def test_flash_cannot_find_microbit():

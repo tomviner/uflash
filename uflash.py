@@ -11,6 +11,7 @@ import ctypes
 import os
 import struct
 import sys
+from glob import glob
 from subprocess import check_output
 
 #: The magic start address in flash memory for a Python script.
@@ -256,9 +257,10 @@ def flash(path_to_python=None, path_to_microbit=None, path_to_runtime=None):
         path_to_microbit = find_microbit()
     # Attempt to write the hex file to the micro:bit.
     if path_to_microbit:
-        hex_path = os.path.join(path_to_microbit, 'micropython.hex')
-        print('Flashing Python to: {}'.format(hex_path))
-        save_hex(micropython_hex, hex_path)
+        for path in glob(path_to_microbit):
+            hex_path = os.path.join(path, 'micropython.hex')
+            print('Flashing Python to: {}'.format(hex_path))
+            save_hex(micropython_hex, hex_path)
     else:
         raise IOError('Unable to find micro:bit. Is it plugged in?')
 
