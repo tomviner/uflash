@@ -24,10 +24,10 @@ clean:
 	find . \( -name '*.tgz' -o -name dropin.cache \) -print0 | $(XARGS) rm
 
 pyflakes:
-	find . \( -name _build -o -name var -o -path ./docs \) -type d -prune -o -name '*.py' -print0 | $(XARGS) pyflakes
+	find . \( -name _build -o -name var -o -path ./docs -o -path '.*' \) -type d -prune -o -name '*.py' -print0 | $(XARGS) pyflakes
 
 pep8:
-	find . \( -name _build -o -name var \) -type d -prune -o -name '*.py' -print0 | $(XARGS) -n 1 pep8 --repeat --exclude=build/*,docs/* --ignore=E731,E402
+	find . \( -name _build -o -name var -o -path '.*' \) -type d -prune -o -name '*.py' -print0 | $(XARGS) -n 1 pep8 --repeat --exclude=build/*,docs/* --ignore=E731,E402
 
 test: clean
 	py.test
